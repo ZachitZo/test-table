@@ -63,8 +63,9 @@ window.onscroll = () => {
 </script>
 
 <template>
+  <span class="info">Страниц загружено: {{page}}</span>
   <table class="table">
-    <tr>
+    <tr class="tableHeader">
       <th>
         <p>Имя</p>
         <TextFilter
@@ -99,6 +100,13 @@ window.onscroll = () => {
 </template>
 
 <style lang="sass" scoped>
+  .info
+    margin: 25px auto
+    position: sticky
+    top: 25px
+    left: 25px
+    color: black
+
   .table
     width: 100%
     max-width: 800px
@@ -126,4 +134,8 @@ window.onscroll = () => {
     padding: 20px
     font-style: italic
     color: #2e48a6
+
+  .tableHeader
+    position: sticky
+    top: 0
 </style>
