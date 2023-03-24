@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 import createDebounce from '../helpers/debounce';
+import { isBottomOfElement } from '../helpers/dom';
 
-import Person from '../models/Person';
-import { Fields } from '../types/fields';
+import Person from '../types/person';
+import Fields from '../types/fields';
 
 import TextFilter from './TextFilter.vue';
 
@@ -14,6 +15,9 @@ const debounce = createDebounce();
 
 // Data
 const persons = ref<Array<Person>>([]);
+
+// Table
+const scrollingTable = ref<HTMLTableElement | null>(null);
 
 // Pagination
 const page = ref<number>(1);
@@ -31,9 +35,41 @@ const filters = ref<{[key in Fields]: string}>({
   weight: '',
 });
 
+// Check filters for empty values
+const isEmptyFilters = (): boolean => Object.values(filters.value).every(filterValue => !filterValue);
+
+// Add data function
+const addDataChunk = (): void => {
+  const dataChunk: Array<Person> = props.tableData.slice(chunkStart.value, chunkEnd.value);
+
+  if (dataChunk.length) {
+    persons.value.push(...dataChunk);
+    page.value++;
+  }
+};
+
+// Infinite-scroll
+const infiniteScroll = (): void => {
+  const tableElement = scrollingTable.value;
+
+  if (isBottomOfElement(tableElement) && isEmptyFilters()) {
+    addDataChunk();
+  }
+}
+
+// Create/remove event listeners for infinite-scroll
+onMounted(() => {
+  infiniteScroll();
+  window.addEventListener('scroll', infiniteScroll);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', infiniteScroll);
+});
+
 // Filters function
-const filterPersons = () => {
-  if (Object.values(filters.value).every(filterValue => !filterValue)) {
+const filterPersons = (): void => {
+  if (isEmptyFilters()) {
     persons.value = props.tableData.slice(0, chunkStart.value);
     return;
   }
@@ -46,25 +82,11 @@ const filterPersons = () => {
     return !isInvalidName && !isInvalidHeight && !isInvalidWeight;
   });
 }
-
-// Infinite-scroll
-window.onscroll = () => {
-  let bottomOfWindow = document.documentElement.scrollTop + window.innerHeight === document.documentElement.offsetHeight;
-
-  if (bottomOfWindow) {
-    const addedPersons: Array<Person> = props.tableData.slice(chunkStart.value, chunkEnd.value);
-
-    if (addedPersons.length) {
-      persons.value.push(...addedPersons);
-      page.value++;
-    }
-  }
-};
 </script>
 
 <template>
   <span class="info">Страниц загружено: {{page}}</span>
-  <table class="table">
+  <table class="table" ref="scrollingTable">
     <tr class="tableHeader">
       <th>
         <p>Имя</p>

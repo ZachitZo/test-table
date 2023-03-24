@@ -1,4 +1,4 @@
-import { Fields } from '../types/fields';
+import Fields from './fields';
 
 interface Person {
   [Fields.firstName]: string,

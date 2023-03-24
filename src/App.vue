@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Person from './models/Person';
+import Person from './types/person';
 
 import PersonsTable from './components/PersonsTable.vue';
 
